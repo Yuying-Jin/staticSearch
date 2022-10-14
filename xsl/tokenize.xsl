@@ -48,8 +48,7 @@
             </xd:ol>
         </xd:desc>
     </xd:doc>
-    
-    
+
     <!--**************************************************************
        *                                                            *
        *                         Includes                           *
@@ -237,15 +236,25 @@
     
     
     <xd:doc>
-        <xd:desc>This template matches the root HTML element and adds a relativeUri 
-        attribute.</xd:desc>
+        <xd:desc>This template matches the root HTML element with some parameters
+            calculated from before for adding some identifying attributes</xd:desc>
     </xd:doc>
     <xsl:template match="html" mode="clean">
         <xsl:copy>
-            <xsl:apply-templates select="@*" mode="#current"/>
-            <!--Create a relativeUri in the attribute, so we know where to point
+            <!--Apply templates to all of the attributes on the HTML element
+                EXCEPT the id, which we might just duplicate or we might fill in-->
+            <xsl:apply-templates select="@*[not(local-name()='id')]" mode="#current"/>
+            
+            <!--Now (potentially re-)make the id, either using the declared value
+                or an inserted value-->
+            <xsl:attribute name="id" select="if (@id) then @id else $searchIdentifier"/>
+            <xsl:if test="not(@id)">
+                <xsl:attribute name="ss-noId" select="'true'"/>
+            </xsl:if>
+            
+            <!--And create a relativeUri in the attribute, so we know where to point
                 things if ids and filenames don't match or if nesting-->
-            <xsl:attribute name="ss-uri" select="$relativeUri"/>
+            <xsl:attribute name="data-staticSearch-relativeUri" select="$relativeUri"/>
             
             <!--And process nodes normally-->
             <xsl:apply-templates select="node()" mode="#current"/>
@@ -258,8 +267,9 @@
         as important for weighting or contextualizing.</xd:desc>
     </xd:doc>
     <xsl:template match="span | em | b | i | a" mode="clean">
-        <xsl:message use-when="$verbose">TEMPLATE clean: Matching <xsl:value-of select="local-name()"/></xsl:message>
-        
+        <xsl:if test="$verbose">
+            <xsl:message>TEMPLATE clean: Matching <xsl:value-of select="local-name()"/></xsl:message>
+        </xsl:if>
         <!--Just apply templates to the inner nodes-->
         <xsl:apply-templates select="node()" mode="#current"/>
     </xsl:template>
@@ -293,6 +303,44 @@
         <xsl:copy>
             <xsl:apply-templates select="@*|node()" mode="#current"/>
         </xsl:copy>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>Template to check for the soon-to-be deprecated period syntax in class names; in all releases after 1.2,
+            staticSearch classes should use an underscore, not a period (i.e. staticSearch_desc).</xd:desc>
+    </xd:doc>
+    <xsl:template match="meta/@class[matches(.,'(^|\s)staticSearch\.')]" mode="clean">
+        <xsl:variable name="classes" select="tokenize(.)" as="xs:string+"/>
+        <xsl:attribute name="class" separator=" ">
+            <xsl:for-each select="$classes">
+                <xsl:variable name="currClass" select="." as="xs:string"/>
+                <xsl:choose>
+                    <xsl:when test="matches(.,'^staticSearch\.')">
+                        <xsl:variable name="ssType" select="substring-after($currClass,'staticSearch.')" as="xs:string"/>
+                        <xsl:choose>
+                            <!--Check to see if it's a valid filter or document meta,
+                                in which case we (currently) transform it into the new syntax
+                                for backwards compatibility-->
+                            <xsl:when test="$ssType = ($ssFilters, $docMetas)">
+                                <xsl:variable name="classWithUnderscore" select="translate($currClass,'.','_')" as="xs:string"/>
+                                <!--CHANGE TERMINATE TO YES AND CHANGE MESSAGE TO ERROR ONCE FULLY DEPRECATED-->
+                                <xsl:message terminate="no">WARNING: Deprecated meta/@class in <xsl:value-of select="$relativeUri"/> (<xsl:value-of select="$currClass"/>). The "staticSearch." syntax has been deprecated and will not be supported in the next version of staticSearch. Use <xsl:value-of select="$classWithUnderscore"/> instead.
+                                </xsl:message>
+                                <!--REMOVE THE FOLLOWING LINE AFTER DEPRECATION PERIOD-->
+                                <xsl:value-of select="$classWithUnderscore"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <!--TODO: Should we error if there a class isn't properly configured?-->
+                                <xsl:value-of select="$currClass"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="$currClass"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:for-each>
+        </xsl:attribute>
     </xsl:template>
     
     <xd:doc>
@@ -356,7 +404,7 @@
             <xsl:when test="local-name()=('id','lang')">
                 <xsl:copy-of select="."/>
             </xsl:when>
-            <xsl:when test="matches(local-name(),'^(data-)?(staticSearch|ss)-')">
+            <xsl:when test="matches(local-name(),'^data-(staticSearch|ss)-')">
                 <xsl:copy-of select="."/>
             </xsl:when>
             <xsl:otherwise/>
@@ -382,7 +430,7 @@
                 <xsl:variable name="hasClass" select="exists($currMeta[contains-token(@class, $thisDocMetaClass)])" as="xs:boolean"/>
                 <!--Has the name or a class, but not both, raise a warning.-->
                 <xsl:if test="($hasName or $hasClass) and not($hasName and $hasClass)">
-                    <xsl:message>WARNING: Bad meta tag in <xsl:value-of select="$currMeta/ancestor::html/@ss-uri"/> (<xsl:value-of select="'name: ' || $currMeta/@name || '; class=' || $currMeta/@class"/>). All <xsl:value-of select="$thisDocMeta"/> meta tags must have matching @name="<xsl:value-of select="$thisDocMeta"/>" and @class="<xsl:value-of select="$thisDocMetaClass"/>".</xsl:message>
+                    <xsl:message>WARNING: Bad meta tag in <xsl:value-of select="$currMeta/ancestor::html/@data-staticSearch-relativeUri"/> (<xsl:value-of select="'name: ' || $currMeta/@name || '; class=' || $currMeta/@class"/>). All <xsl:value-of select="$thisDocMeta"/> meta tags must have matching @name="<xsl:value-of select="$thisDocMeta"/>" and @class="<xsl:value-of select="$thisDocMetaClass"/>".</xsl:message>
                 </xsl:if>
             </xsl:for-each>
         </xsl:if>
@@ -440,21 +488,27 @@
         <xsl:param name="word" as="xs:string"/>
         
         <!--If we're in verbose mode, then return the word-->
-        <xsl:message use-when="$verbose">$word: <xsl:value-of select="$word"/></xsl:message>
-
-
+        <xsl:if test="$verbose">
+            <xsl:message>$word: <xsl:value-of select="$word"/></xsl:message>
+        </xsl:if>
+        
         <!--Clean the word for stemming-->
         <xsl:variable name="wordToStem" select="hcmc:cleanWordForStemming($word)"/>
-        <xsl:message use-when="$verbose">$wordToStem: <xsl:value-of select="$wordToStem"/></xsl:message>
+        <xsl:if test="$verbose">
+            <xsl:message>$wordToStem: <xsl:value-of select="$wordToStem"/></xsl:message>
+        </xsl:if>
         
         <!--Return it as a lowercase word-->
         <xsl:variable name="lcWord" select="lower-case($wordToStem)"/>
-        <xsl:message use-when="$verbose">$lcWord: <xsl:value-of select="$lcWord"/></xsl:message>
-        
+        <xsl:if test="$verbose">
+            <xsl:message>$lcWord: <xsl:value-of select="$lcWord"/></xsl:message>
+        </xsl:if>
         
         <!--Determine whether or not it should be indexed-->
         <xsl:variable name="shouldIndex" select="hcmc:shouldIndex($lcWord)"/>
-        <xsl:message use-when="$verbose">$shouldIndex: <xsl:value-of select="$shouldIndex"/></xsl:message>
+        <xsl:if test="$verbose">
+            <xsl:message>$shouldIndex: <xsl:value-of select="$shouldIndex"/></xsl:message>
+        </xsl:if>
         
         <xsl:choose>
             <!--If it should, then create the stem for it-->
@@ -479,38 +533,44 @@
     </xd:doc>
     <xsl:function name="hcmc:getStem" as="element(span)">
         <xsl:param name="word" as="xs:string"/>
-
-        <xsl:message use-when="$verbose">hcmc:getStem: $word: <xsl:value-of select="$word"/></xsl:message>
-        
+        <xsl:if test="$verbose">
+            <xsl:message>hcmc:getStem: $word: <xsl:value-of select="$word"/></xsl:message>
+        </xsl:if>
         
         <!--Get the cleaned word again, since we're using the ORIGINAL word here, not the cleaned word
         we used to determine the word's stemmability in hcmc:startStemmingProcess -->
         <xsl:variable name="cleanedWord" select="hcmc:cleanWordForStemming($word)" as="xs:string"/>
-        <xsl:message use-when="$verbose">hcmc:getStem: $cleanedWord: <xsl:value-of select="$cleanedWord"/></xsl:message>
-        
+        <xsl:if test="$verbose">
+            <xsl:message>hcmc:getStem: $cleanedWord: <xsl:value-of select="$cleanedWord"/></xsl:message>
+        </xsl:if>
         
         <!--Make it lowercase-->
         <xsl:variable name="lcWord" select="lower-case($cleanedWord)" as="xs:string"/>
-        <xsl:message use-when="$verbose">hcmc:getStem: $lcWord: <xsl:value-of select="$lcWord"/></xsl:message>
-        
+        <xsl:if test="$verbose">
+            <xsl:message>hcmc:getStem: $lcWord: <xsl:value-of select="$lcWord"/></xsl:message>
+        </xsl:if>
         
         <!--Determine whether or not the word has a digit in it; if it does, then the word shouldn't be put
         through the stemmer-->
         <xsl:variable name="containsDigit" select="matches($cleanedWord,'\d+')" as="xs:boolean"/>
-        <xsl:message use-when="$verbose">hcmc:getStem: $containsDigit: <xsl:value-of select="$containsDigit"/></xsl:message>
-        
+        <xsl:if test="$verbose">
+            <xsl:message>hcmc:getStem: $containsDigit: <xsl:value-of select="$containsDigit"/></xsl:message>
+        </xsl:if>
         
         <!--Check whether or not the word is hyphenated-->
         <xsl:variable name="hyphenated" select="matches($cleanedWord,'[A-Za-z]-[A-Za-z]')" as="xs:boolean"/>
-        <xsl:message use-when="$verbose">hcmc:getStem: $hyphenated: <xsl:value-of select="$hyphenated"/></xsl:message>
-        
+        <xsl:if test="$verbose">
+            <xsl:message>hcmc:getStem: $hyphenated: <xsl:value-of select="$hyphenated"/></xsl:message>
+        </xsl:if>
         
         <!--Now create the stem val-->
         <xsl:variable name="stemVal" 
             select="if ($containsDigit) then $lcWord else ss:stem($lcWord)"
             as="xs:string?"/>
-        <xsl:message use-when="$verbose">hcmc:getStem: $stemVal: <xsl:value-of select="$stemVal"/></xsl:message>
         
+        <xsl:if test="$verbose">
+            <xsl:message>hcmc:getStem: $stemVal: <xsl:value-of select="$stemVal"/></xsl:message>
+        </xsl:if>
         
         <!--Now do stuff-->
         <!--Wrap it in a span-->
@@ -524,7 +584,9 @@
                         
                         <!--When we have a hyphenated word, we want to split it into pieces-->
                         <xsl:when test="$hyphenated">
-                            <xsl:message use-when="$verbose">hcmc:getStem: Found hyphenated construct: <xsl:value-of select="$word"/></xsl:message>
+                            <xsl:if test="$verbose">
+                                <xsl:message>hcmc:getStem: Found hyphenated construct: <xsl:value-of select="$word"/></xsl:message>
+                            </xsl:if>
                             
                             <!--Split the word on the hyphens-->
                             <xsl:variable name="wordTokens" select="tokenize($word,'-')" as="xs:string+"/>
@@ -535,8 +597,9 @@
                                 <xsl:variable name="thisTokenPosition" select="position()"/>
                                 
                                 <!--Spit out a message if we want it-->
-                                <xsl:message use-when="$verbose" expand-text="yes">hcmc:getStem: Process hyphenated segment: {$thisToken} ({$thisTokenPosition}/{count($wordTokens)})</xsl:message>
-                                
+                                <xsl:if test="$verbose">
+                                    <xsl:message>hcmc:getStem: Process hyphenated segment: <xsl:value-of select="$thisToken"/> (<xsl:value-of select="$thisTokenPosition"/>/<xsl:value-of select="count($wordTokens)"/>)</xsl:message>
+                                </xsl:if>
                                 
                                 <!--Now run each hyphen through the process again, and add hyphens after each word-->
                                 <xsl:sequence select="hcmc:startStemmingProcess(.)"/><xsl:if test="$thisTokenPosition ne count($wordTokens)"><xsl:text>-</xsl:text></xsl:if>
@@ -622,7 +685,9 @@
             <xsl:attribute name="ss-pos" select="accumulator-before('stem-position')"/>
             <xsl:if test="$id">
                 <xsl:attribute name="ss-fid" select="$id"/>
-                <xsl:message use-when="$verbose">Found fragment id: <xsl:value-of select="$id"/></xsl:message>
+                <xsl:if test="$verbose">
+                    <xsl:message>Found fragment id: <xsl:value-of select="$id"/></xsl:message>
+                </xsl:if>
             </xsl:if>
             <xsl:apply-templates select="@*|node()" mode="#current"/>
         </xsl:copy>

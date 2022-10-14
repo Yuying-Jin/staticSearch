@@ -187,7 +187,9 @@
                     <xsl:sequence select="$declaredLang"/>
                 </xsl:when>
                 <xsl:otherwise>
-                        <xsl:message use-when="$verbose">WARNING: No language declared for element with @id='staticSearch' to determine captions. Using 'en' by default.</xsl:message>
+                    <xsl:if test="$verbose">
+                        <xsl:message>WARNING: No language declared for element with @id='staticSearch' to determine captions. Using 'en' by default.</xsl:message>
+                    </xsl:if>
                     <xsl:sequence select="'en'"/>
                 </xsl:otherwise>
             </xsl:choose>
@@ -224,14 +226,14 @@
                 data-allowphrasal="{if ($phrasalSearch) then 'yes' else 'no'}"
                 data-allowwildcards="{if ($wildcardSearch) then 'yes' else 'no'}"
                 data-minwordlength="{if ($minWordLength) then $minWordLength else '3'}"
+                data-scrolltotextfragment="{if ($scrollToTextFragment) then 'yes' else 'no'}"
                 data-maxkwicstoshow="{if ($maxKwicsToShow) then $maxKwicsToShow else 10}"
                 data-resultsperpage="{$resultsPerPage}"
                 onsubmit="return false;"
                 data-versionstring="{$versionString}"
                 data-ssfolder="{$outputFolder}"
                 data-kwictruncatestring="{$kwicTruncateString}"
-                data-resultslimit="{$resultsLimit}"
-                >
+                data-resultslimit="{$resultsLimit}">
                 
                 <!--Standard inputs-->
                 <span class="ssQueryAndButton">
@@ -250,12 +252,6 @@
                     <xsl:variable name="boolFilters" select="$filterJSONURIs[matches(.,'ssBool\d+.*\.json')]"/>
                     <xsl:variable name="numFilters" select="$filterJSONURIs[matches(.,'ssNum\d+.*\.json')]"/>
                     
-                    <!--If there are filters, then add a clear button-->
-                    <span class="clearButton">
-                        <button id="ssClear">
-                            <xsl:sequence select="hcmc:getCaption('ssClear', $captionLang)"/>
-                        </button>
-                    </span>
                     
                     <!--Add the "search in" control, which isn't a document filter
                         in the same way-->
@@ -286,6 +282,14 @@
                             </fieldset>
                         </div>
                     </xsl:if>
+                    
+                    
+                    <!--If there are filters, then add a clear button-->
+                    <span class="clearButton">
+                        <button id="ssClear">
+                            <xsl:sequence select="hcmc:getCaption('ssClear', $captionLang)"/>
+                        </button>
+                    </span>
                     
                     <!--Now handle all of the actual document filters-->
                     <!--First, handle the desc filters-->

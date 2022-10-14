@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://hcmc.uvic.ca/ns/staticSearch" version="1">
+    <params>
+        <searchFile>../../Storybook/docs/search.html</searchFile>
+        <versionFile>VERSION</versionFile>
+        <recurse>true<!--Need to set recurse to true for the test--></recurse>
+        <linkToFragmentId>true</linkToFragmentId>
+        <scrollToTextFragment>false</scrollToTextFragment>
+        <phrasalSearch>true</phrasalSearch>
+        <wildcardSearch>true</wildcardSearch>
+        <createContexts>true</createContexts>
+        <resultsPerPage>5</resultsPerPage>
+        <minWordLength>2</minWordLength>
+        <!--NOTE: If phrasalSearch is set to TRUE, then
+        maxContexts prop will be ignored-->
+        <maxKwicsToHarvest>5</maxKwicsToHarvest>
+        <maxKwicsToShow>10</maxKwicsToShow>
+        <totalKwicLength>20</totalKwicLength>
+        <kwicTruncateString>...</kwicTruncateString>
+        <verbose>false</verbose>
+        <stopwordsFile>stopwords.txt</stopwordsFile>
+        <dictionaryFile>../xsl/english_words.txt</dictionaryFile>
+        <indentJSON>true</indentJSON>
+    </params>
+    
+    <rules>
+        <rule weight="5"
+            match="span"/>
+        <rule weight="0"
+            match="h1 | h2 | script | style | header | nav | footer"/>
+    </rules>
+    
+    <contexts>
+        <context match="span[@class='color']"
+            label="Color"/>
+        <context match="span[@class='shape']"
+            label="Shape"/>
+        <context match="span[@class='tech']"
+            label="Technology"/>
+        <context match="span[@class='nature']"
+            label="Nature"/>
+    </contexts>
+    
+    <excludes>
+        <exclude type="index" match="html[@id='excluded']"/>
+        <exclude match="meta[contains-token(@class,'excludedMeta')]" type="filter"/>
+    </excludes>
+    
+</config>

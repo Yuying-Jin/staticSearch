@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://hcmc.uvic.ca/ns/staticSearch" version="1">
+    <params>
+        <searchFile>../../DIGIT400static/docs/_site/search.html</searchFile>
+        <versionFile>VERSION</versionFile>
+        <recurse>true<!--Need to set recurse to true for the test--></recurse>
+        <linkToFragmentId>true</linkToFragmentId>
+        <scrollToTextFragment>false</scrollToTextFragment>
+        <phrasalSearch>true</phrasalSearch>
+        <wildcardSearch>true</wildcardSearch>
+        <createContexts>true</createContexts>
+        <resultsPerPage>5</resultsPerPage>
+        <minWordLength>2</minWordLength>
+        <!--NOTE: If phrasalSearch is set to TRUE, then
+        maxContexts prop will be ignored-->
+        <maxKwicsToHarvest>5</maxKwicsToHarvest>
+        <maxKwicsToShow>10</maxKwicsToShow>
+        <totalKwicLength>20</totalKwicLength>
+        <kwicTruncateString>...</kwicTruncateString>
+        <verbose>false</verbose>
+        <stopwordsFile>stopwords.txt</stopwordsFile>
+        <dictionaryFile>../xsl/english_words.txt</dictionaryFile>
+        <indentJSON>true</indentJSON>
+    </params>
+    
+    <rules>
+
+        <rule weight="0"
+            match="span[@class='lineNum']"/>
+        <rule weight="0"
+            match="h1 | h2 | h3 | script | style | header | nav | footer | *[@class='staticSearch']"/>
+    </rules>
+    
+    <contexts>
+        <context match="blockquote" label="Quotations"/>
+        <context match="*[@class='skill']"
+            label="Skills"/>
+<!--        <context match="cite" label="Citations"/>
+        <context match="p[contains-token(@class,'citation')]" label="Citations"/>-->
+    </contexts>
+    
+    <excludes>
+        <exclude type="index" match="html[@id='excluded']"/>
+        <exclude match="meta[contains-token(@class,'excludedMeta')]" type="filter"/>
+        <exclude match="div[@class='staticSearch']" type="filter"/>
+        
+    </excludes>
+    
+</config>

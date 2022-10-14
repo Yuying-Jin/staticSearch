@@ -19,9 +19,6 @@
         </xd:desc>
         <xd:param name="configFile">A URI pointing to the config XML file that will be turned into the 
         configuration XSLT.</xd:param>
-        <xd:param name="buildReportFilename">A URI pointing to the staticSearch report file.</xd:param>
-        <xd:param name="verbose">Flag passed from ant that describes the user set verbosity setting
-            for messages in the XSLT--useful primarily for debugging.</xd:param>
     </xd:doc>
     
     <!--**************************************************************
@@ -32,14 +29,6 @@
     
     <xsl:param name="configFile" select="'config.xml'"/>
     <xsl:param name="buildReportFilename" select="'staticSearch_report.html'"/>
-    <xsl:param name="ssVerbose" as="xs:string" select="'false'" static="yes"/>
-    
-    <xd:doc>
-        <xd:desc>Parameter to determine if verbose xsl:messages should be enabled.</xd:desc>
-    </xd:doc>
-    <xsl:variable name="verbose" as="xs:boolean" select="matches($ssVerbose,'^(t|true|y|yes|1)','i')" static="yes"/>
-    
-    
     
     
     <!--**************************************************************
@@ -134,7 +123,9 @@
         <xd:ref name="schemaURI" type="variable">$schemaURI</xd:ref>.</xd:desc>
     </xd:doc>
     <xsl:variable name="schema" as="document-node()">
-        <xsl:message use-when="$verbose">Getting schema from <xsl:value-of select="$schemaURI"/></xsl:message>
+        <xsl:if test="$verbose">
+            <xsl:message>Getting schema from <xsl:value-of select="$schemaURI"/></xsl:message>
+        </xsl:if>
         <xsl:sequence select="document($schemaURI)"/>
     </xsl:variable>
         
@@ -214,6 +205,12 @@
             static search should recurse into subdirectories of the collection directory.</xd:desc>
     </xd:doc>
     <xsl:variable name="recurse" select="hcmc:stringToBoolean($configDoc//recurse/text())" as="xs:boolean"/>
+    
+    <xd:doc>
+        <xd:desc><xd:ref name="verbose" type="variable">$verbose</xd:ref> describes the user set verbosity setting
+        for messages in the XSLT--useful primarily for debugging.</xd:desc>
+    </xd:doc>
+    <xsl:variable name="verbose" select="hcmc:stringToBoolean($configDoc//verbose/text())" as="xs:boolean"/>
   
   <!--Single quote-->
   <xsl:variable name="sq">'</xsl:variable>
@@ -253,14 +250,17 @@
     <xsl:variable name="excludeRules" select="$configDoc//excludes/exclude" as="element(exclude)*"/>
     
     
-   
+    
     <xd:doc>
         <xd:desc>
-            <xd:p>The <xd:ref name="weightedRules" type="variable">weightedRules</xd:ref> variable
-                is a sequence of 0 or more rules of elements that have a weight higher than 1 and should be flagged
-                with a particular weight during tokenization.</xd:p>
+            <xd:p>OBSOLETE: Now specified as context elements, not rule elements. 
+                The <xd:ref name="contextRules" type="variable">contextRules</xd:ref> variable is
+                a sequence of 0 or more rules that are specified as context blocks--blocks that are to
+                be used in the JSON creation stage to create the context for the kwic.</xd:p>
         </xd:desc>
     </xd:doc>
+    <xsl:variable name="contextRules" select="$configDoc//contexts/rule" as="element(rule)*"/>
+    
     <xsl:variable name="weightedRules" select="$configDoc//rule[xs:integer(@weight) gt 1]" as="element(rule)*"/>
     
     <xd:doc>
@@ -289,12 +289,12 @@
             <xsl:message>Version string for this build: <xsl:value-of select="$versionString"/></xsl:message>
         </xsl:if>
         
-        
-        <xsl:for-each select="$configDoc//params/*" use-when="$verbose">
-            <xsl:message>$<xsl:value-of select="local-name()"/>: <xsl:value-of select="."/></xsl:message>
-        </xsl:for-each>
-        
-        
+        <xsl:if test="$verbose">
+            <xsl:for-each select="$configDoc//params/*">
+                <xsl:message>$<xsl:value-of select="local-name()"/>: <xsl:value-of select="."/></xsl:message>
+            </xsl:for-each>
+        </xsl:if>
+      
         <!-- Create the patternset file which will be used later by the tokenizing process. -->
         <xsl:result-document href="{$ssPatternsetFile}" method="text">
           <xsl:choose>
@@ -308,7 +308,7 @@
         </xsl:result-document>
         
         <!--Create the result document, which is also an XSLT document, but placed in the dummy XSO namespace-->
-        <xsl:result-document href="{$ssBaseDir}/xsl/config.xsl" method="xml" encoding="UTF-8" normalization-form="NFC" indent="yes">
+        <xsl:result-document href="{$ssBaseDir}/xsl/config.xsl" method="xml" encoding="UTF-8" normalization-form="NFC" indent="yes" exclude-result-prefixes="#all">
             
             <!--Root stylesheet-->
             <xso:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -351,10 +351,10 @@
                     then call the createRetainRules template-->
                 <xsl:if test="not(empty($retainRules))">
                     <xsl:call-template name="createRetainRules" exclude-result-prefixes="#all"/>
-                    <xsl:message use-when="$verbose">
-                        <xsl:text>Create retain rules</xsl:text>
-                        <xsl:call-template name="createRetainRules"/>
-                    </xsl:message>
+                    <xsl:if test="$verbose">
+                        <xsl:message>Create retain rules</xsl:message>
+                        <xsl:message>  <xsl:call-template name="createRetainRules"/></xsl:message>
+                    </xsl:if>
                 </xsl:if>
                 
                 
@@ -362,24 +362,27 @@
                     then call the createDeleteRules template-->
                 <xsl:if test="not(empty($deleteRules))">
                     <xsl:call-template name="createDeleteRules" exclude-result-prefixes="#all"/>
-                    <xsl:message use-when="$verbose">
-                        <xsl:text>Create delete rules</xsl:text>
-                        <xsl:call-template name="createDeleteRules"/>
-                    </xsl:message>
+                    <xsl:if test="$verbose">
+                        <xsl:message>Create delete rules</xsl:message>
+                        <xsl:message>
+                            <xsl:call-template name="createDeleteRules"/>
+                        </xsl:message>
+                    </xsl:if>
                 </xsl:if>
                 
                 <xsl:if test="not(empty($excludeRules))">
                     <xsl:call-template name="createExcludeRules" exclude-result-prefixes="#all"/>
-                    <xsl:message use-when="$verbose">
-                        <xsl:text>Create exclude rules</xsl:text>
-                        <xsl:call-template name="createExcludeRules"/>
-                    </xsl:message>
+                    <xsl:if test="$verbose">
+                        <xsl:message>Create exclude rules</xsl:message>
+                        <xsl:message>
+                            <xsl:call-template name="createExcludeRules"/>
+                        </xsl:message>
+                    </xsl:if>
                 </xsl:if>
                 
                 <xsl:call-template name="createContextRules" exclude-result-prefixes="#all"/>
                 
-                
-                <xsl:if test="not(empty($contexts))" use-when="$verbose">
+                <xsl:if test="$verbose and not(empty($contexts))">
                     <xsl:message>Create context rules</xsl:message>
                     <xsl:message>
                         <xsl:call-template name="createContextRules" exclude-result-prefixes="#all"/>
@@ -389,10 +392,10 @@
                 
                 <xsl:if test="not(empty($weightedRules))">
                     <xsl:call-template name="createWeightingRules"/>
-                    <xsl:message use-when="$verbose">
+                    <xsl:if test="$verbose">
                         <xsl:message>Create weighting rules</xsl:message>
                         <xsl:message><xsl:call-template name="createWeightingRules" exclude-result-prefixes="#all"/></xsl:message>
-                    </xsl:message>
+                    </xsl:if>
                 </xsl:if>
                 
                 
@@ -417,18 +420,10 @@
     <xsl:template name="createGlobals" exclude-result-prefixes="#all">
         
         <xsl:variable name="params" as="element()+">
-            
             <!--First, create the actual configuration file thing-->
             <xso:param name="configFile"><xsl:value-of select="$configUri"/></xso:param>
             <!-- Pass through the build report filename param. -->
             <xso:param name="buildReportFilename" select="'{$buildReportFilename}'"/>    
-            
-            <!--Set the ssVerbose parameter -->
-            <xso:param name="ssVerbose" select="'false'" as="xs:string" static="yes"/>
-            
-            <!--And the corresponding verbose variable-->
-            <xso:variable name="verbose" select="{matches($ssVerbose,'^(y|yes|t|true|1)$','i')}()" as="xs:boolean" static="yes"/>
-            
             <xsl:for-each select="$configDoc//params/*" >
                 <xsl:variable name="thisParam" select="."/>
                 <xsl:variable name="paramName" select="local-name()"/>
@@ -472,11 +467,20 @@
                 <xso:param name="scoringAlgorithm" select="'raw'"/>
             </xsl:if>
             
+            <!--Specify whether or not to link to fragments; we default true-->
+            <xsl:if test="not($configDoc//params/linkToFragmentId)">
+                <xso:param name="linkToFragmentId" select="true()"/>
+            </xsl:if>
+            
             <!--Specify the minimum length of items to index; we default to 3. -->
             <xsl:if test="not($configDoc//params/minWordLength)">
                 <xso:param name="minWordLength" select="3"/>
             </xsl:if>
-
+            
+            <!--Turn on experimental scroll-to-text feature: default false.-->
+            <xsl:if test="not($configDoc//params/scrollToTextFragment)">
+                <xso:param name="scrollToTextFragment" select="false()"/>
+            </xsl:if>
             
             <!--Add resultsPerPage: default to 0-->
             <xsl:if test="not($configDoc//params/resultsPerPage)">

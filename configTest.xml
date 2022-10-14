@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<config xmlns="http://hcmc.uvic.ca/ns/staticSearch" version="2">
+<config xmlns="http://hcmc.uvic.ca/ns/staticSearch" version="1">
     <params>
-        <searchFile>test/search.html</searchFile>
+        <searchFile>../DIGIT4000static/docs/search.html</searchFile>
         <versionFile>test/VERSION</versionFile>
         <recurse>true<!--Need to set recurse to true for the test--></recurse>
+        <linkToFragmentId>true</linkToFragmentId>
+        <scrollToTextFragment>false</scrollToTextFragment>
         <phrasalSearch>true</phrasalSearch>
         <wildcardSearch>true</wildcardSearch>
         <createContexts>true</createContexts>
@@ -12,12 +14,13 @@
         <!--NOTE: If phrasalSearch is set to TRUE, then
         maxContexts prop will be ignored-->
         <maxKwicsToHarvest>5</maxKwicsToHarvest>
-        <maxKwicsToShow>5</maxKwicsToShow>
-        <totalKwicLength>15</totalKwicLength>
+        <maxKwicsToShow>10</maxKwicsToShow>
+        <totalKwicLength>20</totalKwicLength>
         <kwicTruncateString>...</kwicTruncateString>
-        <stopwordsFile>test/test_stopwords.txt</stopwordsFile>
+        <verbose>false</verbose>
+        <stopwordsFile>stopwords.txt</stopwordsFile>
         <dictionaryFile>xsl/english_words.txt</dictionaryFile>
-        <outputFolder>ssTest</outputFolder>
+        <indentJSON>true</indentJSON>
     </params>
     
     <rules>

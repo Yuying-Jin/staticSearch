@@ -235,6 +235,10 @@ class StaticSearch{
       //Configuration for use of wildcards. Default false.
       this.allowWildcards = this.getConfigBool('allowwildcards', false);
 
+      //Configuration for use of experimental scroll-to-text-fragment feature. 
+      //Default false, and also depends on browser support.
+      this.scrollToTextFragment = ((this.getConfigBool('scrolltotextfragment', false)) && ('fragmentDirective' in document));
+
       //String for leading and trailing truncations of KWICs.
       this.kwicTruncateString = this.getConfigStr('kwictruncatestring', '...');
 
@@ -337,7 +341,7 @@ class StaticSearch{
       this.maxKwicsToShow = this.getConfigInt('maxKwicsToShow', 10);
 
       //Result handling object
-      this.resultSet = new SSResultSet(this.maxKwicsToShow, this.reKwicTruncateStr);
+      this.resultSet = new SSResultSet(this.maxKwicsToShow, this.scrollToTextFragment, this.reKwicTruncateStr);
 
       //This allows the user to navigate through searches using the back and
       //forward buttons; to avoid repeatedly pushing state when this happens,
@@ -722,7 +726,7 @@ class StaticSearch{
         let search = [];
         let q = this.queryBox.value.replace(/\s+/, ' ').replace(/(^\s+)|(\s+$)/g, '');
         if (q.length > 0){
-          search.push('q=' + encodeURIComponent(q));
+          search.push('q=' + q);
         }
 
         //Search in filter handling
@@ -1024,7 +1028,7 @@ class StaticSearch{
   }
 
 /** @function StaticSearch~processFilters
-  * @description this function calls StaticSearch~getDocUrisForFilters(),
+  * @description this function calls StaticSearch~getDocIdsForFilters(),
   * and if the function succeeds, it sets the docsMatchingFilters to
   * the returned XSet and returns true, otherwise it clears the current
   * set of filters (THINK: IS THIS CORRECT BEHAVIOUR?) and returns false.
@@ -1033,7 +1037,7 @@ class StaticSearch{
   */
   processFilters(){
     try{
-      this.docsMatchingFilters = this.getDocUrisForFilters();
+      this.docsMatchingFilters = this.getDocIdsForFilters();
       this.activeContexts = new XSet(this.searchInFilterCheckboxes.filter(cbx => cbx.checked).map(c => c.id));
       return true;
     }
@@ -1043,7 +1047,7 @@ class StaticSearch{
     }
   }
 
-  /** @function StaticSearch~getDocUrisForFilters
+  /** @function StaticSearch~getDocIdsForFilters
     * @description this function gets the set of currently-configured
     * filters by analyzing the form elements, then returns a
     * set (in the form of an XSet object) of all the document ids
@@ -1055,7 +1059,7 @@ class StaticSearch{
     * @suppress {missingProperties} The compiler doesn't know about the 
     * docs property.
     */
-    getDocUrisForFilters(){
+    getDocIdsForFilters(){
 
       var xSets = [];
       var currXSet;
