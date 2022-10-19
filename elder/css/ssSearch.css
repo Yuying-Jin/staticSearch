@@ -154,15 +154,16 @@ div#ssResults>ul>li>div>a{
 /* No list markers for kwics */
 div#ssResults>ul>li>div>ul.kwic{
     list-style-type: none;
+    margin-top: 1em;
 }
 /* kwics laid out with flex */
 div#ssResults>ul>li>div>ul.kwic>li{
     display: flex;
     flex-direction: row;
     align-items: center;
-    margin-top: 0.5em;
-    border-top: solid 1pt lightgray;
-    padding: 0.2em;
+/*    margin-top: 0.5em;*/
+    border-top: solid 1pt orange;
+/*    padding: 0.2em;*/
 }
 div#ssResults>ul>li>div>ul.kwic>li>span{
     display: block;
