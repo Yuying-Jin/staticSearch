@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config xmlns="http://hcmc.uvic.ca/ns/staticSearch" version="1">
     <params>
-        <searchFile>../../DIGIT400static/docs/_site/search.html</searchFile>
+        <searchFile>../../Elder_Scrolls_Morrowind/docs/search.html</searchFile>
         <versionFile>VERSION</versionFile>
         <recurse>true<!--Need to set recurse to true for the test--></recurse>
         <linkToFragmentId>true</linkToFragmentId>
@@ -18,21 +18,23 @@
         <totalKwicLength>20</totalKwicLength>
         <kwicTruncateString>...</kwicTruncateString>
         <verbose>false</verbose>
-        <stopwordsFile>stopwords.txt</stopwordsFile>
+        <stopwordsFile>../xsl/english_stopwords.txt</stopwordsFile>
         <dictionaryFile>../xsl/english_words.txt</dictionaryFile>
         <indentJSON>true</indentJSON>
     </params>
     
     <rules>
-        <rule weight ="2" match="*[@class='cv']"/>
-        <rule weight="0" match="*[matches(local-name(),'^h\d+$')] | script | style | header | nav | footer"/>
-        <rule weight="0" match="*[@id='staticSearch']"/>
+        <rule weight ="2" match="table"/>
+        <rule weight ="1" match="p"/>
+        <rule weight="0" match="*[matches(local-name(),'^h\d+$')] | script | style | header | nav | footer | *[@id='nav']"/>
     </rules>
     
     <contexts>
-        <context match="div[@class='skill']" label="Skills"/>
-        <context match="*[@class='card'] | *[@class='project']" label="Porjects"/>
-        <context match="div[@class='cardContainer']" label="Gallery Page"/>
+        <context match="*[@id='bookTables']" label="Book Table"/>
+        <context match="*[@id='items']" label="Item Table"/>
+        <context match="*[@id='loc']" label="Location Table"/>
+        <context match="*[@id='group']" label="Group Table"/>
+        <context match="*[@id='persons']" label="Person Table"/>
         <!--<context match="*[contains-token(@class,'cv')]" label="CV Page"/>-->
         
     </contexts>

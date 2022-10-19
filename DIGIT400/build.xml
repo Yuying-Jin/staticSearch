@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="." name="BuildStaticSearch" default="all" xmlns:if="ant:if"
   xmlns:unless="ant:unless">
-  <property name="workFolder" value="elder"/>
+  <property name="workFolder" value="DIGIT400"/>
   <!-- 
         **********************************************************
         *  Ant file for building a static search engine for a    *
