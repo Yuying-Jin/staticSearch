@@ -102,8 +102,9 @@ div#ssResults>ul>li{
     flex-wrap: nowrap;
     margin-top: 0.75em;
 }
-div#ssResults>ul>li>a{
+div#ssResults>ul>li a{
     flex-grow: 0;
+    color: black;
 }
 div#ssResults>ul>li>div{
   flex-grow: 1;
@@ -140,10 +141,10 @@ div#ssResults > div#ssPagination > button{
 
 /* Alternate bg colour. */
 div#ssResults>ul>li:nth-child(2n) {
-    background-color: rgb(240, 240, 240);
+    background-color: rgba(227,120,57,0.1);
     transition: background-color .5s;
-    border-top: 1px solid rgb(230, 230, 230);
-    border-bottom: 1px solid rgb(230, 230, 230);
+/*    border-top: 1px solid rgb(230, 200, 100);
+    border-bottom: 1px solid rgb(230, 200, 100);*/
 }
 /* Larger document titles */
 div#ssResults>ul>li>div>a{
@@ -267,4 +268,3 @@ body.ssSearching:not(.ssLoading) div#ssSearching, body.ssLoading:not(.ssSearchin
     transform: translate(-50%, -50%);
     display: block;
 }
-

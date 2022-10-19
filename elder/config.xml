@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config xmlns="http://hcmc.uvic.ca/ns/staticSearch" version="1">
     <params>
-        <searchFile>../../Elder_Scrolls_Morrowind/docs/search.html</searchFile>
+        <searchFile>../../Elder/docs/search.html</searchFile>
         <versionFile>VERSION</versionFile>
         <recurse>true<!--Need to set recurse to true for the test--></recurse>
         <linkToFragmentId>true</linkToFragmentId>
@@ -26,7 +26,7 @@
     <rules>
         <rule weight ="2" match="table"/>
         <rule weight ="1" match="p"/>
-        <rule weight="0" match="*[matches(local-name(),'^h\d+$')] | script | style | header | nav | footer | *[@id='nav']"/>
+        <rule weight="0" match="*[matches(local-name(),'^h\d+$')] | script | style | header | *[@class='nav'] | footer | *[@id='nav']"/>
     </rules>
     
     <contexts>
@@ -35,7 +35,6 @@
         <context match="*[@id='loc']" label="Location Table"/>
         <context match="*[@id='group']" label="Group Table"/>
         <context match="*[@id='persons']" label="Person Table"/>
-        <!--<context match="*[contains-token(@class,'cv')]" label="CV Page"/>-->
         
     </contexts>
     
